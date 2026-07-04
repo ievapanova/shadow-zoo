@@ -94,6 +94,9 @@
   .stage.w4 { background: radial-gradient(circle at 50% 30%, #ffffff, #bfe2f8); }
   .stage.w5 { background: radial-gradient(circle at 50% 30%, #f0f2f7, #b9c2d0); }
   .stage.w6 { background: radial-gradient(circle at 50% 30%, #fbe6ff, #cba8ec); }
+  .stage.w7 { background: radial-gradient(circle at 50% 30%, #dfe4ff, #9fb0e8); }
+  .stage.w8 { background: radial-gradient(circle at 50% 30%, #f2f7cf, #c9d98a); }
+  .stage.w9 { background: radial-gradient(circle at 50% 30%, #ffe9d6, #ffc19b); }
 
   .layer {
     position: absolute; inset: 0;
@@ -192,6 +195,8 @@
   .zn-meadow { background: linear-gradient(180deg, #e2f3ad, #bfe089); }
   .zn-sea    { background: linear-gradient(180deg, #a8dcf5, #77c3ea); }
   .zn-road   { background: linear-gradient(180deg, #dfe4ed, #b9c2d0); }
+  .zn-space  { background: linear-gradient(180deg, #d9dcf7, #b0b4e6); }
+  .zn-picnic { background: linear-gradient(180deg, #ffe6c8, #ffcfa0); }
   .zone-label {
     position: absolute; top: 3px; left: 10px;
     font-size: 12px; font-weight: bold; color: #00000059;
@@ -416,8 +421,8 @@ const CONFIG = {
   hintLight: 5,        // цена фонарика
   hintSound: 3,        // цена звука
   dailyGift: 10,       // подарок раз в день
-  worldNeeds: [0, 50, 100, 150, 210, 280, 360], // сколько нужно заработать, чтобы открыть мир
-  zooPrice: [10, 20, 30, 30, 35, 40, 50]        // цена жителя в зоопарк (по мирам)
+  worldNeeds: [0, 50, 100, 150, 210, 280, 360, 450, 550, 660], // сколько нужно заработать, чтобы открыть мир
+  zooPrice: [10, 20, 30, 30, 35, 40, 50, 55, 45, 40]           // цена жителя в зоопарк (по мирам)
 };
 
 const WORLDS = [
@@ -427,7 +432,10 @@ const WORLDS = [
   { name: 'Лес',       e: '🌲', cls: 'w3' },
   { name: 'Север',     e: '❄️', cls: 'w4' },
   { name: 'Транспорт', e: '🚗', cls: 'w5' },
-  { name: 'Сказка',    e: '🏰', cls: 'w6' }
+  { name: 'Сказка',    e: '🏰', cls: 'w6' },
+  { name: 'Космос',    e: '🚀', cls: 'w7' },
+  { name: 'Букашки',   e: '🐛', cls: 'w8' },
+  { name: 'Вкусняшки', e: '🍎', cls: 'w9' }
 ];
 
 const LANG_FLAGS = { en:'🇬🇧', es:'🇪🇸', fr:'🇫🇷', de:'🇩🇪', it:'🇮🇹', pt:'🇵🇹', uk:'🇺🇦', pl:'🇵🇱', tr:'🇹🇷', zh:'🇨🇳', ja:'🇯🇵' };
@@ -711,7 +719,128 @@ const ANIMALS = [
     ru:['динозавр','дино','тираннозавр','рекс','тирекс'], en:['dinosaur','dino','t-rex','trex','tyrannosaurus'],
     es:['dinosaurio','dino'], fr:['dinosaure','dino'], de:['Dinosaurier','Dino'], it:['dinosauro','dino'],
     pt:['dinossauro','dino'], uk:['динозавр','діно'], pl:['dinozaur','dino'], tr:['dinozor','dino'],
-    zh:['恐龙'], ja:['きょうりゅう','恐竜','ティラノサウルス'] }}
+    zh:['恐龙'], ja:['きょうりゅう','恐竜','ティラノサウルス'] }},
+
+  // ---- Космос (мир 7) ----
+  { id:'star', e:'⭐', w:7, snd:'Я свечу далеко-далеко в тёмном небе!', names:{
+    ru:['звезда','звёздочка','звездочка'], en:['star'],
+    es:['estrella'], fr:['étoile'], de:['Stern'], it:['stella'],
+    pt:['estrela'], uk:['зірка','зіронька'], pl:['gwiazda'], tr:['yıldız'],
+    zh:['星星','星'], ja:['ほし','星','スター'] }},
+  { id:'moon', e:'🌙', w:7, snd:'Я выхожу ночью, когда ты спишь!', names:{
+    ru:['луна','месяц','месяц?'], en:['moon'],
+    es:['luna'], fr:['lune'], de:['Mond'], it:['luna'],
+    pt:['lua'], uk:['місяць'], pl:['księżyc'], tr:['ay'],
+    zh:['月亮','月'], ja:['つき','月','ムーン'] }},
+  { id:'sun', e:'☀️', w:7, snd:'Я жёлтое и грею тебя днём!', names:{
+    ru:['солнце','солнышко'], en:['sun'],
+    es:['sol'], fr:['soleil'], de:['Sonne'], it:['sole'],
+    pt:['sol'], uk:['сонце'], pl:['słońce'], tr:['güneş'],
+    zh:['太阳'], ja:['たいよう','太陽','おひさま'] }},
+  { id:'planet', e:'🪐', w:7, snd:'У меня есть красивое колечко вокруг!', names:{
+    ru:['планета','сатурн'], en:['planet','saturn'],
+    es:['planeta'], fr:['planète'], de:['Planet'], it:['pianeta'],
+    pt:['planeta'], uk:['планета'], pl:['planeta'], tr:['gezegen'],
+    zh:['行星','星球'], ja:['わくせい','惑星','プラネット'] }},
+  { id:'alien', e:'👽', w:7, snd:'Я прилетел с другой планеты! Бип-боп!', names:{
+    ru:['инопланетянин','пришелец','инопланетяшка'], en:['alien'],
+    es:['alienígena','extraterrestre','marciano'], fr:['extraterrestre','alien'], de:['Außerirdischer','Alien'], it:['alieno','extraterrestre'],
+    pt:['alienígena','extraterrestre','et'], uk:['інопланетянин','прибулець'], pl:['kosmita','ufoludek'], tr:['uzaylı'],
+    zh:['外星人'], ja:['うちゅうじん','宇宙人','エイリアン'] }},
+  { id:'astronaut', e:'🧑‍🚀', w:7, snd:'Я летаю в космос в скафандре!', names:{
+    ru:['космонавт','астронавт'], en:['astronaut','spaceman','cosmonaut'],
+    es:['astronauta','cosmonauta'], fr:['astronaute','cosmonaute'], de:['Astronaut','Raumfahrer','Kosmonaut'], it:['astronauta','cosmonauta'],
+    pt:['astronauta','cosmonauta'], uk:['космонавт','астронавт'], pl:['astronauta','kosmonauta'], tr:['astronot','kozmonot'],
+    zh:['宇航员','航天员'], ja:['うちゅうひこうし','宇宙飛行士','アストロノート'] }},
+  { id:'ufo', e:'🛸', w:7, snd:'Ж-ж-ж! Я вжух — и улетел!', names:{
+    ru:['тарелка','летающая тарелка','нло'], en:['ufo','flying saucer','spaceship'],
+    es:['ovni','platillo volante'], fr:['ovni','soucoupe volante'], de:['ufo','fliegende untertasse'], it:['ufo','disco volante'],
+    pt:['óvni','ovni','disco voador'], uk:['нло','тарілка','літаюча тарілка'], pl:['ufo','latający talerz','spodek'], tr:['ufo','uçan daire'],
+    zh:['飞碟','幽浮'], ja:['ユーフォー','空飛ぶ円盤','ユーエフオー'] }},
+
+  // ---- Букашки (мир 8) ----
+  { id:'ant', e:'🐜', w:8, snd:'Я маленький, но очень сильный! Тащу крошку!', names:{
+    ru:['муравей','муравьишка'], en:['ant'],
+    es:['hormiga'], fr:['fourmi'], de:['Ameise'], it:['formica'],
+    pt:['formiga'], uk:['мурашка','мураха'], pl:['mrówka'], tr:['karınca'],
+    zh:['蚂蚁','蚁'], ja:['あり','アリ','蟻'] }},
+  { id:'spider', e:'🕷️', w:8, snd:'Я плету паутинку — вжик-вжик!', names:{
+    ru:['паук','паучок'], en:['spider'],
+    es:['araña'], fr:['araignée'], de:['Spinne'], it:['ragno'],
+    pt:['aranha'], uk:['павук','павучок'], pl:['pająk'], tr:['örümcek'],
+    zh:['蜘蛛'], ja:['くも','クモ','蜘蛛'] }},
+  { id:'bee', e:'🐝', w:8, snd:'Ж-ж-ж! Я делаю сладкий мёд!', names:{
+    ru:['пчела','пчёлка','пчелка'], en:['bee','honeybee'],
+    es:['abeja'], fr:['abeille'], de:['Biene'], it:['ape'],
+    pt:['abelha'], uk:['бджола','бджілка'], pl:['pszczoła'], tr:['arı'],
+    zh:['蜜蜂'], ja:['はち','ハチ','蜂','みつばち'] }},
+  { id:'ladybug', e:'🐞', w:8, snd:'Я красная в чёрную точечку!', names:{
+    ru:['божья коровка','коровка'], en:['ladybug','ladybird'],
+    es:['mariquita','catarina'], fr:['coccinelle'], de:['Marienkäfer'], it:['coccinella'],
+    pt:['joaninha'], uk:['сонечко','божа корівка'], pl:['biedronka'], tr:['uğur böceği'],
+    zh:['瓢虫'], ja:['てんとうむし','テントウムシ'] }},
+  { id:'snail', e:'🐌', w:8, snd:'Я ползу ме-е-едленно и ношу домик на спинке!', names:{
+    ru:['улитка'], en:['snail'],
+    es:['caracol'], fr:['escargot'], de:['Schnecke'], it:['lumaca','chiocciola'],
+    pt:['caracol','lesma'], uk:['равлик','слимак'], pl:['ślimak'], tr:['salyangoz'],
+    zh:['蜗牛'], ja:['かたつむり','カタツムリ','でんでんむし'] }},
+  { id:'caterpillar', e:'🐛', w:8, snd:'Я подрасту и стану бабочкой!', names:{
+    ru:['гусеница','червячок'], en:['caterpillar','bug'],
+    es:['oruga'], fr:['chenille'], de:['Raupe'], it:['bruco'],
+    pt:['lagarta'], uk:['гусениця','гусінь'], pl:['gąsienica'], tr:['tırtıl'],
+    zh:['毛毛虫','毛虫'], ja:['いもむし','イモムシ','けむし'] }},
+  { id:'beetle', e:'🪲', w:8, snd:'Я блестящий жук! Жу-жу!', names:{
+    ru:['жук','жучок'], en:['beetle'],
+    es:['escarabajo'], fr:['scarabée','coléoptère'], de:['Käfer'], it:['scarabeo','coleottero'],
+    pt:['besouro'], uk:['жук','жучок'], pl:['żuk','chrząszcz'], tr:['böcek'],
+    zh:['甲虫'], ja:['かぶとむし','甲虫','ビートル'] }},
+  { id:'cricket', e:'🦗', w:8, snd:'Стрёк-стрёк! Я прыгаю в травке!', names:{
+    ru:['кузнечик','сверчок'], en:['cricket','grasshopper'],
+    es:['grillo','saltamontes'], fr:['criquet','sauterelle','grillon'], de:['Grille','Heuschrecke','Grashüpfer'], it:['grillo','cavalletta'],
+    pt:['grilo','gafanhoto'], uk:['коник','цвіркун'], pl:['świerszcz','konik polny'], tr:['çekirge','cırcır böceği'],
+    zh:['蟋蟀','蚱蜢'], ja:['こおろぎ','コオロギ','ばった','バッタ'] }},
+
+  // ---- Вкусняшки (мир 9) ----
+  { id:'apple', e:'🍎', w:9, snd:'Я красное и сладкое, расту на дереве!', names:{
+    ru:['яблоко','яблочко'], en:['apple'],
+    es:['manzana'], fr:['pomme'], de:['Apfel'], it:['mela'],
+    pt:['maçã'], uk:['яблуко'], pl:['jabłko'], tr:['elma'],
+    zh:['苹果'], ja:['りんご','リンゴ','林檎'] }},
+  { id:'banana', e:'🍌', w:9, snd:'Я жёлтый и кривой! Обезьянки меня любят!', names:{
+    ru:['банан'], en:['banana'],
+    es:['plátano','banana'], fr:['banane'], de:['Banane'], it:['banana'],
+    pt:['banana'], uk:['банан'], pl:['banan'], tr:['muz'],
+    zh:['香蕉'], ja:['バナナ'] }},
+  { id:'strawberry', e:'🍓', w:9, snd:'Я красная, сладкая, вся в точечках!', names:{
+    ru:['клубника','ягода','земляника'], en:['strawberry'],
+    es:['fresa','frutilla'], fr:['fraise'], de:['Erdbeere'], it:['fragola'],
+    pt:['morango'], uk:['полуниця','суниця'], pl:['truskawka'], tr:['çilek'],
+    zh:['草莓'], ja:['いちご','イチゴ','苺'] }},
+  { id:'watermelon', e:'🍉', w:9, snd:'Я большой, зелёный снаружи, красный внутри!', names:{
+    ru:['арбуз'], en:['watermelon'],
+    es:['sandía'], fr:['pastèque'], de:['Wassermelone','Melone'], it:['anguria','cocomero'],
+    pt:['melancia'], uk:['кавун'], pl:['arbuz'], tr:['karpuz'],
+    zh:['西瓜'], ja:['すいか','スイカ','西瓜'] }},
+  { id:'pizza', e:'🍕', w:9, snd:'Я круглая, вкусная, с сыром! Ням!', names:{
+    ru:['пицца'], en:['pizza'],
+    es:['pizza'], fr:['pizza'], de:['Pizza'], it:['pizza'],
+    pt:['pizza'], uk:['піца'], pl:['pizza'], tr:['pizza'],
+    zh:['披萨','比萨'], ja:['ピザ'] }},
+  { id:'icecream', e:'🍦', w:9, snd:'Я холодное и сладкое! Лизь-лизь!', names:{
+    ru:['мороженое','мороженка'], en:['ice cream','icecream'],
+    es:['helado'], fr:['glace'], de:['Eis','Eiscreme'], it:['gelato'],
+    pt:['sorvete','gelado'], uk:['морозиво'], pl:['lody'], tr:['dondurma'],
+    zh:['冰淇淋','冰激凌'], ja:['アイスクリーム','アイス'] }},
+  { id:'cake', e:'🎂', w:9, snd:'Меня едят на день рождения! Задуй свечки!', names:{
+    ru:['торт','тортик'], en:['cake'],
+    es:['pastel','tarta','torta'], fr:['gâteau'], de:['Kuchen','Torte'], it:['torta'],
+    pt:['bolo'], uk:['торт'], pl:['tort','ciasto'], tr:['pasta','kek'],
+    zh:['蛋糕'], ja:['ケーキ'] }},
+  { id:'cookie', e:'🍪', w:9, snd:'Я хрустящее печенье с шоколадкой!', names:{
+    ru:['печенье','печенька'], en:['cookie','biscuit'],
+    es:['galleta'], fr:['biscuit','cookie'], de:['Keks','Plätzchen'], it:['biscotto'],
+    pt:['biscoito','bolacha'], uk:['печиво'], pl:['ciastko','herbatnik'], tr:['kurabiye','bisküvi'],
+    zh:['饼干'], ja:['クッキー','ビスケット'] }}
 ];
 
 const PRAISE = ['Молодец!','Супер!','Ты гений!','Вот это да!','Отлично!','Ура!','Здорово!'];
@@ -720,6 +849,10 @@ const CHEER  = ['Почти!','Попробуй ещё!','Не сдавайся!
 /* ================== ПОМОЩНИКИ ================== */
 const $ = id => document.getElementById(id);
 const rnd = arr => arr[Math.floor(Math.random() * arr.length)];
+// на телефоне сами в поле не тыкаем, а то выскакивает клавиатура
+// (?touch=1 в адресе — включить телефонный режим для проверки)
+const TOUCH_DEVICE = /[?&]touch=1/.test(location.search)
+  || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
 
 const CHAR_MAP = { 'ß':'ss','ł':'l','ı':'i','œ':'oe','æ':'ae','ø':'o','đ':'d' };
 function norm(s) {
@@ -867,7 +1000,7 @@ function newRound(forceId, forceGold) {
   progressUI();
   coinsUI();
   // не дёргаем страницу вниз при открытии — пусть видно заголовок и наклейки
-  $('answer').focus({ preventScroll: true });
+  if (!TOUCH_DEVICE) $('answer').focus({ preventScroll: true });
 }
 
 function progressUI() {
@@ -897,7 +1030,8 @@ function wrong(word) {
   stage.classList.add('shake');
   setTimeout(() => stage.classList.remove('shake'), 500);
   sndWrong();
-  $('answer').select();
+  // выделяем слово для перепечатки; на телефоне — только если клавиатура и так открыта
+  if (!TOUCH_DEVICE || document.activeElement === $('answer')) $('answer').select();
 }
 
 function win() {
@@ -1097,10 +1231,12 @@ const ZONES = [
   { id:'forest', name:'Лес',     e:'🌲', props:['🌲','🌳'], cls:'zn-forest' },
   { id:'meadow', name:'Полянка', e:'🌾', props:['🌻','🏡'], cls:'zn-meadow' },
   { id:'sea',    name:'Море',    e:'🌊', props:['🌊','🐚'], cls:'zn-sea' },
-  { id:'road',   name:'Дорога',  e:'🛣️', props:['🚦','🏁'], cls:'zn-road' }
+  { id:'road',   name:'Дорога',  e:'🛣️', props:['🚦','🏁'], cls:'zn-road' },
+  { id:'space',  name:'Космос',  e:'🌌', props:['⭐','🪐'], cls:'zn-space' },
+  { id:'picnic', name:'Столик',  e:'🧺', props:['🧺','🍓'], cls:'zn-picnic' }
 ];
 // куда селится новичок: по родному миру
-const HOME_ZONE = ['meadow', 'forest', 'sea', 'forest', 'north', 'road', 'meadow'];
+const HOME_ZONE = ['meadow', 'forest', 'sea', 'forest', 'north', 'road', 'meadow', 'space', 'meadow', 'picnic'];
 const zoneOf = a => state.zooPlace[a.id] || HOME_ZONE[a.w] || 'meadow';
 
 function renderZoo() {
@@ -1395,7 +1531,7 @@ function switchTab(name) {
   ['play', 'zoo', 'worlds'].forEach(t => { $('tab-' + t).hidden = t !== name; });
   if (name === 'zoo') renderZoo();
   if (name === 'worlds') renderWorlds();
-  if (name === 'play') $('answer').focus({ preventScroll: true });
+  if (name === 'play' && !TOUCH_DEVICE) $('answer').focus({ preventScroll: true });
 }
 document.querySelectorAll('.tabs button').forEach(b =>
   b.addEventListener('click', () => switchTab(b.dataset.tab)));
