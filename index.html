@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Зоопарк теней 🦁</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+
+  body {
+    font-family: "Chalkboard SE", "Comic Sans MS", "Comic Neue", cursive, sans-serif;
+    background: linear-gradient(180deg, #aee7ff 0%, #e8f9ff 45%, #fdf6d8 100%);
+    min-height: 100vh;
+    color: #35405a;
+    padding-bottom: 40px;
+  }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; max-width: 720px; margin: 0 auto;
+    flex-wrap: wrap; gap: 8px;
+  }
+  header h1 { font-size: clamp(22px, 5vw, 32px); color: #2c3e6b; text-shadow: 0 2px 0 #fff, 0 0 14px #fff, 0 0 8px #fff; }
+  .tagline { width: 100%; font-size: 14px; color: #5a6b94; text-shadow: 0 0 8px #fff, 0 0 5px #fff; }
+
+  /* наклейки на фоне: слой над фоном, но ПОД игрой (у header/nav/main z-index выше),
+     иначе клики ловит страница и до наклеек не дотянуться */
+  #stickers { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  header, .tabs, main { position: relative; z-index: 1; }
+  .stk {
+    position: absolute; line-height: 1; user-select: none;
+    pointer-events: auto; cursor: pointer;
+    transform: rotate(var(--rot));
+    filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(2px 3px 2px rgba(60, 80, 120, .28));
+  }
+  .stk.pop { animation: stkPop .5s; }
+  @keyframes stkPop {
+    0%   { transform: rotate(var(--rot)) scale(1); }
+    40%  { transform: rotate(calc(var(--rot) + 14deg)) scale(1.4); }
+    70%  { transform: rotate(calc(var(--rot) - 9deg)) scale(.9); }
+    100% { transform: rotate(var(--rot)) scale(1); }
+  }
+
+  .coins-pill {
+    background: linear-gradient(180deg, #ffe27a, #ffc93c);
+    border: 3px solid #e8a400; border-radius: 999px;
+    padding: 6px 16px; font-size: 22px; font-weight: bold; color: #7a5200;
+    box-shadow: 0 3px 0 #d99e00; white-space: nowrap;
+  }
+  .coins-pill.shake { animation: shake .4s; }
+
+  .tabs {
+    display: flex; gap: 8px; justify-content: center; margin: 6px auto 14px;
+    max-width: 720px; padding: 0 14px;
+  }
+  .tabs button {
+    flex: 1; font-family: inherit; font-size: clamp(14px, 3.5vw, 18px);
+    padding: 10px 6px; border-radius: 16px; border: 3px solid #ffffff;
+    background: #ffffffe6; color: #46557e; cursor: pointer; font-weight: bold;
+    box-shadow: 0 3px 0 #c9d8ea;
+  }
+  .tabs button.active { background: #ff9f43; border-color: #ffca7a; color: #fff; box-shadow: 0 3px 0 #d97b16; }
+
+  main { max-width: 720px; margin: 0 auto; padding: 0 14px; }
+  section[hidden] { display: none; }
+
+  .card {
+    background: #fffffff5; border-radius: 24px; padding: 16px;
+    box-shadow: 0 6px 20px #6da3c92e; margin-bottom: 16px;
+  }
+
+  .world-banner {
+    text-align: center; font-size: 18px; font-weight: bold; color: #47681f;
+    margin-bottom: 8px;
+  }
+  .gold-banner {
+    text-align: center; font-size: 16px; font-weight: bold; color: #a06b00;
+    background: linear-gradient(90deg, #fff3c4, #ffe27a, #fff3c4);
+    border-radius: 12px; padding: 6px; margin-bottom: 8px;
+    animation: pulse 1s infinite alternate;
+  }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.03); } }
+
+  .stage {
+    position: relative; height: clamp(220px, 45vw, 300px);
+    border-radius: 20px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stage.w0 { background: radial-gradient(circle at 50% 30%, #fdf7d5, #d7f0b2); }
+  .stage.w1 { background: radial-gradient(circle at 50% 30%, #e8ffd4, #9fd786); }
+  .stage.w2 { background: radial-gradient(circle at 50% 30%, #d9f6ff, #8fd0f0); }
+  .stage.w3 { background: radial-gradient(circle at 50% 30%, #d9f0c8, #6fae62); }
+  .stage.w4 { background: radial-gradient(circle at 50% 30%, #ffffff, #bfe2f8); }
+  .stage.w5 { background: radial-gradient(circle at 50% 30%, #f0f2f7, #b9c2d0); }
+  .stage.w6 { background: radial-gradient(circle at 50% 30%, #fbe6ff, #cba8ec); }
+
+  .layer {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(120px, 32vw, 190px); line-height: 1;
+    user-select: none; pointer-events: none;
+  }
+  .layer-shadow { filter: brightness(0); transition: filter .6s; }
+  .stage.gold .layer-shadow { filter: brightness(0) drop-shadow(0 0 22px #ffce3a); }
+  .stage.won .layer-shadow { filter: none; animation: bounce .7s; }
+  .stage.won .patch { display: none; }
+  .stage.shake .layer-shadow { animation: shake .45s; }
+  @keyframes bounce {
+    0% { transform: scale(1); } 30% { transform: scale(1.25) rotate(-5deg); }
+    60% { transform: scale(.95) rotate(4deg); } 100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); } 20% { transform: translateX(-12px); }
+    40% { transform: translateX(10px); } 60% { transform: translateX(-7px); } 80% { transform: translateX(5px); }
+  }
+
+  .sound-bubble {
+    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+    background: #fff; border: 3px solid #ffb35c; border-radius: 18px;
+    padding: 8px 16px; font-size: 18px; font-weight: bold; color: #d2691e;
+    box-shadow: 0 4px 10px #0002; white-space: nowrap; z-index: 5;
+  }
+
+  .hints { display: flex; gap: 10px; margin: 12px 0; }
+  .hints button {
+    flex: 1; font-family: inherit; font-size: clamp(13px, 3.4vw, 16px);
+    padding: 10px 6px; border-radius: 14px; cursor: pointer; font-weight: bold;
+    border: 3px solid #b7e3ff; background: #e6f6ff; color: #23689b;
+    box-shadow: 0 3px 0 #9fcbe8;
+  }
+  .hints button:active { transform: translateY(2px); box-shadow: none; }
+  .hints button:disabled { opacity: .5; cursor: not-allowed; }
+
+  form#guessForm { display: flex; gap: 10px; }
+  #answer {
+    flex: 1; font-family: inherit; font-size: 18px; padding: 12px 14px;
+    border-radius: 14px; border: 3px solid #b8c6e8; outline: none; min-width: 0;
+  }
+  #answer:focus { border-color: #ff9f43; }
+  .mic-btn {
+    font-family: inherit; font-size: 22px; cursor: pointer; line-height: 1;
+    padding: 0 14px; border-radius: 14px; border: 3px solid #ffb3c1;
+    background: linear-gradient(180deg, #ffd6de, #ffb3c1);
+    box-shadow: 0 3px 0 #e58798;
+  }
+  .mic-btn:active { transform: translateY(2px); box-shadow: none; }
+  .mic-btn.listening {
+    border-color: #ff5d73; background: #ff8fa0;
+    animation: listenPulse 1s infinite;
+  }
+  @keyframes listenPulse {
+    0%, 100% { box-shadow: 0 0 0 0 #ff5d7388; }
+    50% { box-shadow: 0 0 0 12px #ff5d7300; }
+  }
+  .voice-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 10px; font-size: 14px; color: #6b7ba3; flex-wrap: wrap;
+  }
+  .voice-row select {
+    font-family: inherit; font-size: 14px; padding: 4px 8px;
+    border-radius: 10px; border: 2px solid #b8c6e8; background: #fff; color: #46557e;
+  }
+  .btn {
+    font-family: inherit; font-size: 17px; font-weight: bold; cursor: pointer;
+    padding: 12px 18px; border-radius: 14px; border: 3px solid #7cd47c;
+    background: linear-gradient(180deg, #8ee08e, #58c158); color: #fff;
+    box-shadow: 0 3px 0 #3d9c3d;
+  }
+  .btn:active { transform: translateY(2px); box-shadow: none; }
+  .btn-next {
+    display: block; width: 100%; margin-top: 12px; font-size: 20px;
+    border-color: #ffca7a; background: linear-gradient(180deg, #ffb35c, #ff9226);
+    box-shadow: 0 3px 0 #d97b16;
+  }
+
+  #message { min-height: 30px; text-align: center; font-size: 19px; font-weight: bold; margin-top: 12px; }
+  #message .good { color: #2e9e44; }
+  #message .bad { color: #e2574c; }
+  #translations { text-align: center; font-size: 16px; color: #5a6b94; margin-top: 6px; min-height: 22px; }
+  .lang-note { text-align: center; font-size: 12.5px; color: #8d9ab8; margin-top: 10px; }
+  .progress-note { text-align: center; font-size: 14px; color: #6b7ba3; margin-top: 8px; }
+
+  /* Зоопарк: карта с местами для жизни */
+  .zoo-map { border-radius: 20px; overflow: hidden; border: 3px solid #ffffff; }
+  .zone {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+    padding: 22px 12px 10px; min-height: 68px; position: relative;
+  }
+  .zn-north  { background: linear-gradient(180deg, #f2fbff, #cfeafc); }
+  .zn-forest { background: linear-gradient(180deg, #bfe6a5, #8fce7a); }
+  .zn-meadow { background: linear-gradient(180deg, #e2f3ad, #bfe089); }
+  .zn-sea    { background: linear-gradient(180deg, #a8dcf5, #77c3ea); }
+  .zn-road   { background: linear-gradient(180deg, #dfe4ed, #b9c2d0); }
+  .zone-label {
+    position: absolute; top: 3px; left: 10px;
+    font-size: 12px; font-weight: bold; color: #00000059;
+  }
+  .zone-prop { font-size: 30px; }
+  .zoo-animal { font-size: 46px; cursor: pointer; animation: bob 2.4s ease-in-out infinite; }
+  .zoo-animal:active { transform: scale(1.2); }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  .zoo-hint { font-size: 13.5px; color: #6b7ba3; text-align: center; margin: 8px 0; }
+
+  /* Панель зверя: голосовушка и переселение */
+  #panelWrap {
+    position: fixed; inset: 0; background: #00000066; z-index: 30;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .panel-card {
+    background: #fff; border-radius: 24px; padding: 18px; text-align: center;
+    max-width: 420px; width: 100%; position: relative; box-shadow: 0 12px 40px #0005;
+  }
+  .panel-stage { position: relative; height: 160px; display: flex; align-items: center; justify-content: center; }
+  #panelEmoji { font-size: 125px; line-height: 1; transition: transform .08s; }
+  #panelEmoji.recording { animation: recPulse 1s infinite; }
+  @keyframes recPulse {
+    0%, 100% { filter: drop-shadow(0 0 2px #ff5d73); }
+    50% { filter: drop-shadow(0 0 22px #ff5d73); }
+  }
+  #mouth {
+    position: absolute; left: 50%; top: 62%;
+    width: 38px; height: 18px; background: #4a2c2a;
+    border: 3px solid #2b1a19; border-radius: 50%;
+    transform: translateX(-50%) scaleY(.15); transform-origin: center;
+    pointer-events: none; opacity: 0; transition: opacity .2s;
+  }
+  #panelName { font-size: 22px; font-weight: bold; color: #35405a; margin: 4px 0 10px; }
+  .panel-btns { display: flex; gap: 10px; justify-content: center; }
+  .panel-btns button {
+    font-family: inherit; font-size: 15px; font-weight: bold; cursor: pointer;
+    padding: 10px 14px; border-radius: 14px; border: 3px solid #ffb3c1;
+    background: #ffe9ee; color: #c2405a;
+  }
+  .panel-btns button:active { transform: translateY(2px); }
+  .panel-move { margin-top: 14px; font-size: 14px; color: #6b7ba3; }
+  .panel-move .zones { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+  .zone-btn {
+    font-family: inherit; font-size: 13px; font-weight: bold; cursor: pointer;
+    padding: 7px 10px; border-radius: 12px; border: 2px solid #b8c6e8;
+    background: #f2f6ff; color: #46557e;
+  }
+  .zone-btn.cur { background: #58c158; border-color: #3d9c3d; color: #fff; }
+  #panelClose {
+    position: absolute; top: 10px; right: 12px; border: none; background: none;
+    font-size: 22px; cursor: pointer; color: #aab3c9; font-family: inherit;
+  }
+
+  .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }
+  .shop-card {
+    background: #fff; border: 3px solid #e3e9f5; border-radius: 16px;
+    padding: 10px; text-align: center;
+  }
+  .shop-card .big { font-size: 46px; }
+  .shop-card .nm { font-weight: bold; font-size: 15px; margin: 4px 0; }
+  .shop-card button {
+    font-family: inherit; font-weight: bold; font-size: 14px; cursor: pointer;
+    border-radius: 10px; border: 2px solid #ffca7a; padding: 6px 10px;
+    background: #ffedcf; color: #b06000;
+  }
+  .shop-card button:disabled { opacity: .45; cursor: not-allowed; }
+  .shop-card.locked { opacity: .65; background: #f3f5fa; }
+  .shop-card.locked .big { filter: grayscale(1); }
+  .shop-card .hint-lock { font-size: 12px; color: #8d9ab8; }
+  .shop-card.owned { border-color: #8ee08e; background: #f0fff0; }
+
+  /* Миры */
+  .world-card {
+    display: flex; align-items: center; gap: 14px;
+    background: #fff; border: 3px solid #e3e9f5; border-radius: 18px;
+    padding: 14px; margin-bottom: 10px;
+  }
+  .world-card .we { font-size: 48px; }
+  .world-card .wt { flex: 1; }
+  .world-card .wt b { font-size: 18px; }
+  .world-card .wt .sub { font-size: 13.5px; color: #6b7ba3; }
+  .world-card button {
+    font-family: inherit; font-weight: bold; font-size: 15px; cursor: pointer;
+    border-radius: 12px; border: 3px solid #7cd47c; padding: 9px 14px;
+    background: #e9fbe9; color: #2e7d32;
+  }
+  .world-card button.current { background: #58c158; color: #fff; }
+  .world-card button:disabled { border-color: #ccc; background: #eee; color: #999; cursor: not-allowed; }
+  .earned-note { text-align: center; font-size: 15px; color: #6b7ba3; margin: 10px 0; }
+  .bar { height: 14px; background: #e6ecf7; border-radius: 999px; overflow: hidden; margin-top: 4px; }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, #ffd34d, #ff9f43); border-radius: 999px; transition: width .5s; }
+
+  .reset-btn {
+    display: block; margin: 26px auto 0; font-family: inherit; font-size: 12px;
+    color: #aab3c9; background: none; border: none; cursor: pointer; text-decoration: underline;
+  }
+
+  /* Всплывашки */
+  #toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(120px);
+    background: #35405a; color: #fff; font-size: 16px; font-weight: bold;
+    padding: 12px 20px; border-radius: 999px; box-shadow: 0 6px 18px #0004;
+    transition: transform .35s; z-index: 50; max-width: 90vw; text-align: center;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  .float-coin {
+    position: fixed; font-size: 22px; font-weight: bold; z-index: 60;
+    pointer-events: none; animation: rise 1.1s forwards;
+  }
+  @keyframes rise { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-70px); } }
+
+  #confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 40; }
+  .conf { position: absolute; top: -6%; animation: fall linear forwards; }
+  @keyframes fall {
+    from { transform: translateY(0) rotate(0deg); }
+    to { transform: translateY(115vh) rotate(720deg); }
+  }
+</style>
+</head>
+<body>
+
+<div id="stickers"></div>
+
+<header>
+  <h1>🦁 Зоопарк теней</h1>
+  <div class="coins-pill" id="coinsPill">🪙 <span id="coins">0</span></div>
+  <div class="tagline">Угадай, чья тень! Пиши на любом языке 🌍</div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="play" class="active">🎮 Играть</button>
+  <button data-tab="zoo">🏞️ Зоопарк</button>
+  <button data-tab="worlds">🌍 Миры</button>
+</nav>
+
+<main>
+
+  <section id="tab-play">
+    <div class="card">
+      <div class="world-banner" id="worldBanner"></div>
+      <div class="gold-banner" id="goldBanner" hidden>⭐ ЗОЛОТОЙ РАУНД! Угадаешь — получишь +20! ⭐</div>
+      <div class="stage w0" id="stage">
+        <span class="layer layer-shadow" id="shadowEmoji"></span>
+        <div id="patches"></div>
+        <div class="sound-bubble" id="bubble" hidden></div>
+      </div>
+      <div class="hints">
+        <button id="hintLight">🔦 Осветить кусочек · 5🪙</button>
+        <button id="hintSound">🔊 Услышать звук · 3🪙</button>
+      </div>
+      <form id="guessForm" autocomplete="off">
+        <button type="button" class="mic-btn" id="micBtn" title="Сказать голосом">🎤</button>
+        <input id="answer" placeholder="Кто это? Напиши здесь!" autocomplete="off" autocapitalize="off">
+        <button class="btn" type="submit">✅</button>
+      </form>
+      <div class="voice-row">🗣️ Говорю на языке: <select id="voiceLang"></select></div>
+      <div id="message"></div>
+      <div id="translations"></div>
+      <button class="btn btn-next" id="nextBtn" hidden>Дальше ➡️</button>
+      <div class="progress-note" id="progressNote"></div>
+      <div class="lang-note">🌍 Понимаю: русский · english · español · français · deutsch · italiano · português · українська · polski · türkçe · 中文 · 日本語</div>
+    </div>
+  </section>
+
+  <section id="tab-zoo" hidden>
+    <div class="card">
+      <div class="world-banner" id="zooTitle">🏞️ Твой зоопарк</div>
+      <div class="zoo-hint" id="zooHint"></div>
+      <div class="zoo-map" id="zooScene"></div>
+      <div class="world-banner" style="margin-top:16px">🛒 Магазин зверей</div>
+      <div style="text-align:center;font-size:13.5px;color:#6b7ba3">Сначала угадай зверя в игре — потом его можно купить в зоопарк!</div>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+  </section>
+
+  <section id="tab-worlds" hidden>
+    <div class="card">
+      <div class="earned-note">Всего заработано за игру: <b id="earnedTotal">0</b> 🪙<br>
+        <span style="font-size:12.5px">(эти монетки открывают миры, тратить из кошелька не страшно!)</span></div>
+      <div id="worldList"></div>
+      <button class="reset-btn" id="resetBtn">начать игру заново</button>
+    </div>
+  </section>
+
+</main>
+
+<div id="panelWrap" hidden>
+  <div class="panel-card">
+    <button id="panelClose">✖</button>
+    <div class="panel-stage">
+      <span id="panelEmoji">🦒</span>
+      <div id="mouth"></div>
+    </div>
+    <div id="panelName"></div>
+    <div class="panel-btns">
+      <button id="recBtn">🎙️ Записать голос</button>
+      <button id="playBtn">▶️ Говори!</button>
+    </div>
+    <div class="panel-move">
+      Где будет жить:
+      <div class="zones" id="moveRow"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="confetti"></div>
+
+<script>
+'use strict';
+
+/* ================== НАСТРОЙКИ (папа может менять цифры тут) ================== */
+const CONFIG = {
+  startCoins: 20,      // монетки в самом начале
+  reward: 10,          // за правильный ответ
+  goldReward: 20,      // за правильный ответ в золотом раунде
+  goldChance: 0.1,     // как часто бывает золотой раунд
+  penaltyMin: 2,       // за ошибку отнимается 2...
+  penaltyMax: 3,       // ...или 3 монетки
+  hintLight: 5,        // цена фонарика
+  hintSound: 3,        // цена звука
+  dailyGift: 10,       // подарок раз в день
+  worldNeeds: [0, 50, 100, 150, 210, 280, 360], // сколько нужно заработать, чтобы открыть мир
+  zooPrice: [10, 20, 30, 30, 35, 40, 50]        // цена жителя в зоопарк (по мирам)
+};
+
+const WORLDS = [
+  { name: 'Ферма',     e: '🚜', cls: 'w0' },
+  { name: 'Джунгли',   e: '🌴', cls: 'w1' },
+  { name: 'Океан',     e: '🌊', cls: 'w2' },
+  { name: 'Лес',       e: '🌲', cls: 'w3' },
+  { name: 'Север',     e: '❄️', cls: 'w4' },
+  { name: 'Транспорт', e: '🚗', cls: 'w5' },
+  { name: 'Сказка',    e: '🏰', cls: 'w6' }
+];
+
+const LANG_FLAGS = { en:'🇬🇧', es:'🇪🇸', fr:'🇫🇷', de:'🇩🇪', it:'🇮🇹', pt:'🇵🇹', uk:'🇺🇦', pl:'🇵🇱', tr:'🇹🇷', zh:'🇨🇳', ja:'🇯🇵' };
+
+/* ================== ЖИВОТНЫЕ ================== */
+const ANIMALS = [
+  // ---- Ферма (мир 0) ----
+  { id:'cat', e:'🐈', w:0, snd:'Мяу-мяу!', names:{
+    ru:['кошка','кот','котик','киса','кошечка','котёнок','котенок'], en:['cat','kitten','kitty'],
+    es:['gato','gata','gatito'], fr:['chat'], de:['Katze','Kater'], it:['gatto','gatta'],
+    pt:['gato','gata'], uk:['кіт','кішка','киця','котик'], pl:['kot','kotek'], tr:['kedi'],
+    zh:['猫','猫咪'], ja:['ねこ','ネコ','猫'] }},
+  { id:'dog', e:'🐕', w:0, snd:'Гав-гав!', names:{
+    ru:['собака','собачка','пёс','пес','щенок'], en:['dog','puppy'],
+    es:['perro','perrito'], fr:['chien'], de:['Hund'], it:['cane'],
+    pt:['cachorro','cão'], uk:['собака','пес','песик'], pl:['pies','piesek'], tr:['köpek'],
+    zh:['狗','小狗'], ja:['いぬ','イヌ','犬'] }},
+  { id:'horse', e:'🐎', w:0, snd:'И-го-го!', names:{
+    ru:['лошадь','лошадка','конь','пони'], en:['horse','pony'],
+    es:['caballo'], fr:['cheval'], de:['Pferd'], it:['cavallo'],
+    pt:['cavalo'], uk:['кінь','коник','лошадь'], pl:['koń'], tr:['at'],
+    zh:['马'], ja:['うま','ウマ','馬'] }},
+  { id:'cow', e:'🐄', w:0, snd:'Му-у-у!', names:{
+    ru:['корова','коровка','бурёнка','буренка'], en:['cow'],
+    es:['vaca'], fr:['vache'], de:['Kuh'], it:['mucca','vacca'],
+    pt:['vaca'], uk:['корова'], pl:['krowa'], tr:['inek'],
+    zh:['牛','奶牛'], ja:['うし','ウシ','牛'] }},
+  { id:'pig', e:'🐖', w:0, snd:'Хрю-хрю!', names:{
+    ru:['свинья','свинка','хрюшка','поросёнок','поросенок'], en:['pig','piglet'],
+    es:['cerdo','chancho','puerco','cochino'], fr:['cochon','porc'], de:['Schwein','Ferkel'], it:['maiale','porco'],
+    pt:['porco'], uk:['свиня','порося'], pl:['świnia'], tr:['domuz'],
+    zh:['猪','小猪'], ja:['ぶた','ブタ','豚'] }},
+  { id:'rooster', e:'🐓', w:0, snd:'Ку-ка-ре-ку!', names:{
+    ru:['петух','петушок','курица','курочка'], en:['rooster','chicken','hen'],
+    es:['gallo','gallina','pollo'], fr:['coq','poule'], de:['Hahn','Huhn'], it:['gallo','gallina'],
+    pt:['galo','galinha'], uk:['півень','курка'], pl:['kogut','kura'], tr:['horoz','tavuk'],
+    zh:['公鸡','鸡'], ja:['にわとり','ニワトリ','鶏'] }},
+  { id:'rabbit', e:'🐇', w:0, snd:'Прыг-прыг! Люблю морковку!', names:{
+    ru:['кролик','крольчонок','заяц','зайчик','зайка'], en:['rabbit','bunny','hare'],
+    es:['conejo'], fr:['lapin'], de:['Hase','Kaninchen'], it:['coniglio'],
+    pt:['coelho'], uk:['кролик','кріль','заєць'], pl:['królik','zając'], tr:['tavşan'],
+    zh:['兔子','兔'], ja:['うさぎ','ウサギ','兎'] }},
+  { id:'sheep', e:'🐑', w:0, snd:'Бе-е-е!', names:{
+    ru:['овца','овечка','баран','барашек'], en:['sheep','lamb'],
+    es:['oveja','cordero'], fr:['mouton','brebis'], de:['Schaf','Lamm'], it:['pecora'],
+    pt:['ovelha','carneiro'], uk:['вівця','баран'], pl:['owca','baran'], tr:['koyun','kuzu'],
+    zh:['羊','绵羊'], ja:['ひつじ','ヒツジ','羊'] }},
+
+  // ---- Джунгли (мир 1) ----
+  { id:'elephant', e:'🐘', w:1, snd:'Ту-у-у! Я трублю хоботом!', names:{
+    ru:['слон','слоник','слониха'], en:['elephant'],
+    es:['elefante'], fr:['éléphant'], de:['Elefant'], it:['elefante'],
+    pt:['elefante'], uk:['слон'], pl:['słoń'], tr:['fil'],
+    zh:['大象','象'], ja:['ぞう','ゾウ','象'] }},
+  { id:'giraffe', e:'🦒', w:1, snd:'Я самый высокий и очень тихий!', names:{
+    ru:['жираф','жирафик','жирафа'], en:['giraffe'],
+    es:['jirafa'], fr:['girafe'], de:['Giraffe'], it:['giraffa'],
+    pt:['girafa'], uk:['жираф','жирафа'], pl:['żyrafa'], tr:['zürafa'],
+    zh:['长颈鹿'], ja:['きりん','キリン'] }},
+  { id:'monkey', e:'🐒', w:1, snd:'У-у-а-а!', names:{
+    ru:['обезьяна','обезьянка','мартышка','макака','шимпанзе'], en:['monkey','ape','chimp'],
+    es:['mono'], fr:['singe'], de:['Affe'], it:['scimmia'],
+    pt:['macaco'], uk:['мавпа','мавпочка'], pl:['małpa'], tr:['maymun'],
+    zh:['猴子','猴'], ja:['さる','サル','猿'] }},
+  { id:'snake', e:'🐍', w:1, snd:'Ш-ш-ш-ш!', names:{
+    ru:['змея','змейка','удав','кобра'], en:['snake','serpent'],
+    es:['serpiente','culebra','víbora'], fr:['serpent'], de:['Schlange'], it:['serpente'],
+    pt:['cobra','serpente'], uk:['змія'], pl:['wąż','żmija'], tr:['yılan'],
+    zh:['蛇'], ja:['へび','ヘビ','蛇'] }},
+  { id:'tiger', e:'🐅', w:1, snd:'Р-р-р! Я весь полосатый!', names:{
+    ru:['тигр','тигрёнок','тигренок'], en:['tiger'],
+    es:['tigre'], fr:['tigre'], de:['Tiger'], it:['tigre'],
+    pt:['tigre'], uk:['тигр'], pl:['tygrys'], tr:['kaplan'],
+    zh:['老虎','虎'], ja:['とら','トラ','虎'] }},
+  { id:'crocodile', e:'🐊', w:1, snd:'Щёлк-щёлк зубами!', names:{
+    ru:['крокодил','крокодильчик','аллигатор'], en:['crocodile','alligator','croc'],
+    es:['cocodrilo','caimán'], fr:['crocodile'], de:['Krokodil'], it:['coccodrillo'],
+    pt:['crocodilo','jacaré'], uk:['крокодил'], pl:['krokodyl'], tr:['timsah'],
+    zh:['鳄鱼'], ja:['わに','ワニ','鰐'] }},
+  { id:'parrot', e:'🦜', w:1, snd:'Кр-р-р! Привет-привет!', names:{
+    ru:['попугай','попугайчик'], en:['parrot'],
+    es:['loro','papagayo'], fr:['perroquet'], de:['Papagei'], it:['pappagallo'],
+    pt:['papagaio'], uk:['папуга'], pl:['papuga'], tr:['papağan'],
+    zh:['鹦鹉'], ja:['オウム','おうむ','インコ'] }},
+  { id:'rhino', e:'🦏', w:1, snd:'Фыр-фыр! У меня рог на носу!', names:{
+    ru:['носорог','носорожек'], en:['rhino','rhinoceros'],
+    es:['rinoceronte'], fr:['rhinocéros'], de:['Nashorn'], it:['rinoceronte'],
+    pt:['rinoceronte'], uk:['носоріг'], pl:['nosorożec'], tr:['gergedan'],
+    zh:['犀牛'], ja:['さい','サイ','犀'] }},
+
+  // ---- Океан (мир 2) ----
+  { id:'fish', e:'🐟', w:2, snd:'Буль-буль!', names:{
+    ru:['рыба','рыбка'], en:['fish'],
+    es:['pez','pescado'], fr:['poisson'], de:['Fisch'], it:['pesce'],
+    pt:['peixe'], uk:['риба','рибка'], pl:['ryba','rybka'], tr:['balık'],
+    zh:['鱼'], ja:['さかな','サカナ','魚'] }},
+  { id:'whale', e:'🐳', w:2, snd:'У-у-у-у! Я пою песни в море!', names:{
+    ru:['кит','китёнок','китенок'], en:['whale'],
+    es:['ballena'], fr:['baleine'], de:['Wal'], it:['balena'],
+    pt:['baleia'], uk:['кит'], pl:['wieloryb'], tr:['balina'],
+    zh:['鲸鱼','鲸'], ja:['くじら','クジラ','鯨'] }},
+  { id:'dolphin', e:'🐬', w:2, snd:'И-и-и-и! Я свищу и прыгаю!', names:{
+    ru:['дельфин','дельфинчик'], en:['dolphin'],
+    es:['delfín'], fr:['dauphin'], de:['Delfin','Delphin'], it:['delfino'],
+    pt:['golfinho'], uk:['дельфін'], pl:['delfin'], tr:['yunus'],
+    zh:['海豚'], ja:['いるか','イルカ'] }},
+  { id:'octopus', e:'🐙', w:2, snd:'Буль! У меня восемь ног!', names:{
+    ru:['осьминог','осьминожек','спрут'], en:['octopus'],
+    es:['pulpo'], fr:['poulpe','pieuvre'], de:['Krake','Oktopus','Tintenfisch'], it:['polpo','polipo'],
+    pt:['polvo'], uk:['восьминіг'], pl:['ośmiornica'], tr:['ahtapot'],
+    zh:['章鱼'], ja:['たこ','タコ','蛸'] }},
+  { id:'crab', e:'🦀', w:2, snd:'Щёлк-щёлк клешнями! Хожу боком!', names:{
+    ru:['краб','крабик'], en:['crab'],
+    es:['cangrejo'], fr:['crabe'], de:['Krabbe','Krebs'], it:['granchio'],
+    pt:['caranguejo'], uk:['краб'], pl:['krab'], tr:['yengeç'],
+    zh:['螃蟹','蟹'], ja:['かに','カニ','蟹'] }},
+  { id:'turtle', e:'🐢', w:2, snd:'Я хожу ме-е-е-едленно!', names:{
+    ru:['черепаха','черепашка'], en:['turtle','tortoise'],
+    es:['tortuga'], fr:['tortue'], de:['Schildkröte'], it:['tartaruga'],
+    pt:['tartaruga'], uk:['черепаха'], pl:['żółw'], tr:['kaplumbağa'],
+    zh:['乌龟','海龟','龟'], ja:['かめ','カメ','亀'] }},
+  { id:'shark', e:'🦈', w:2, snd:'Ам! У меня очень много зубов!', names:{
+    ru:['акула','акулёнок','акуленок'], en:['shark'],
+    es:['tiburón'], fr:['requin'], de:['Hai','Haifisch'], it:['squalo'],
+    pt:['tubarão'], uk:['акула'], pl:['rekin'], tr:['köpekbalığı','köpek balığı'],
+    zh:['鲨鱼'], ja:['さめ','サメ','鮫'] }},
+  { id:'penguin', e:'🐧', w:2, snd:'Я птица, но не летаю — я плаваю!', names:{
+    ru:['пингвин','пингвинчик'], en:['penguin'],
+    es:['pingüino'], fr:['pingouin','manchot'], de:['Pinguin'], it:['pinguino'],
+    pt:['pinguim'], uk:['пінгвін'], pl:['pingwin'], tr:['penguen'],
+    zh:['企鹅'], ja:['ペンギン','ぺんぎん'] }},
+
+  // ---- Лес (мир 3) ----
+  { id:'fox', e:'🦊', w:3, snd:'Тяв-тяв! Я рыжая хитрюга!', names:{
+    ru:['лиса','лисица','лисичка','лис'], en:['fox'],
+    es:['zorro','zorra'], fr:['renard'], de:['Fuchs'], it:['volpe'],
+    pt:['raposa'], uk:['лисиця','лисичка','лис'], pl:['lis'], tr:['tilki'],
+    zh:['狐狸'], ja:['きつね','キツネ','狐'] }},
+  { id:'bear', e:'🐻', w:3, snd:'Р-р-р! Где мой мёд?', names:{
+    ru:['медведь','мишка','медвежонок','миша'], en:['bear'],
+    es:['oso'], fr:['ours'], de:['Bär'], it:['orso'],
+    pt:['urso'], uk:['ведмідь','ведмедик'], pl:['niedźwiedź','miś'], tr:['ayı'],
+    zh:['熊'], ja:['くま','クマ','熊'] }},
+  { id:'hedgehog', e:'🦔', w:3, snd:'Фыр-фыр! Я весь в иголках!', names:{
+    ru:['ёжик','ёж','еж','ежик'], en:['hedgehog'],
+    es:['erizo'], fr:['hérisson'], de:['Igel'], it:['riccio'],
+    pt:['ouriço'], uk:['їжак','їжачок'], pl:['jeż'], tr:['kirpi'],
+    zh:['刺猬'], ja:['はりねずみ','ハリネズミ'] }},
+  { id:'squirrel', e:'🐿️', w:3, snd:'Цок-цок! Где мои орешки?', names:{
+    ru:['белка','белочка'], en:['squirrel'],
+    es:['ardilla'], fr:['écureuil'], de:['Eichhörnchen'], it:['scoiattolo'],
+    pt:['esquilo'], uk:['білка','білочка'], pl:['wiewiórka'], tr:['sincap'],
+    zh:['松鼠'], ja:['りす','リス'] }},
+  { id:'owl', e:'🦉', w:3, snd:'Ух-ух! Я не сплю ночью!', names:{
+    ru:['сова','совушка','филин','сыч'], en:['owl'],
+    es:['búho','lechuza'], fr:['hibou','chouette'], de:['Eule'], it:['gufo','civetta'],
+    pt:['coruja'], uk:['сова'], pl:['sowa'], tr:['baykuş'],
+    zh:['猫头鹰'], ja:['ふくろう','フクロウ'] }},
+  { id:'deer', e:'🦌', w:3, snd:'У меня рога как веточки!', names:{
+    ru:['олень','оленёнок','олененок'], en:['deer'],
+    es:['ciervo','venado'], fr:['cerf'], de:['Hirsch','Reh'], it:['cervo'],
+    pt:['cervo','veado'], uk:['олень'], pl:['jeleń'], tr:['geyik'],
+    zh:['鹿'], ja:['しか','シカ','鹿'] }},
+  { id:'frog', e:'🐸', w:3, snd:'Ква-ква!', names:{
+    ru:['лягушка','лягушонок','жаба','квакушка'], en:['frog'],
+    es:['rana'], fr:['grenouille'], de:['Frosch'], it:['rana'],
+    pt:['sapo','rã'], uk:['жаба','жабка'], pl:['żaba'], tr:['kurbağa'],
+    zh:['青蛙'], ja:['かえる','カエル','蛙'] }},
+  { id:'butterfly', e:'🦋', w:3, snd:'Я порхаю тихо-тихо!', names:{
+    ru:['бабочка'], en:['butterfly'],
+    es:['mariposa'], fr:['papillon'], de:['Schmetterling'], it:['farfalla'],
+    pt:['borboleta'], uk:['метелик'], pl:['motyl'], tr:['kelebek'],
+    zh:['蝴蝶'], ja:['ちょう','チョウ','ちょうちょ'] }},
+
+  // ---- Север (мир 4) ----
+  { id:'polarbear', e:'🐻‍❄️', w:4, snd:'Р-р-р! Я люблю снег и лёд!', names:{
+    ru:['белый медведь','медведь','мишка','умка'], en:['polar bear','bear'],
+    es:['oso polar','oso'], fr:['ours polaire','ours'], de:['Eisbär','Bär'], it:['orso polare','orso'],
+    pt:['urso polar','urso'], uk:['білий ведмідь','ведмідь'], pl:['niedźwiedź polarny','niedźwiedź'], tr:['kutup ayısı','ayı'],
+    zh:['北极熊','熊'], ja:['しろくま','シロクマ','ホッキョクグマ'] }},
+  { id:'seal', e:'🦭', w:4, snd:'Ав-ав! Я хлопаю ластами!', names:{
+    ru:['тюлень','тюленчик','нерпа','морской котик'], en:['seal'],
+    es:['foca'], fr:['phoque'], de:['Robbe','Seehund'], it:['foca'],
+    pt:['foca'], uk:['тюлень'], pl:['foka'], tr:['fok'],
+    zh:['海豹'], ja:['あざらし','アザラシ'] }},
+  { id:'moose', e:'🫎', w:4, snd:'У меня рога как большие ладошки!', names:{
+    ru:['лось','лосёнок','лосенок'], en:['moose','elk'],
+    es:['alce'], fr:['élan','orignal'], de:['Elch'], it:['alce'],
+    pt:['alce'], uk:['лось'], pl:['łoś'], tr:['sığın','geyik'],
+    zh:['驼鹿'], ja:['ヘラジカ','へらじか'] }},
+  { id:'eagle', e:'🦅', w:4, snd:'Клё-клё! Я летаю выше всех!', names:{
+    ru:['орёл','орел','орлёнок','орленок'], en:['eagle'],
+    es:['águila'], fr:['aigle'], de:['Adler'], it:['aquila'],
+    pt:['águia'], uk:['орел'], pl:['orzeł'], tr:['kartal'],
+    zh:['老鹰','鹰'], ja:['わし','ワシ','鷲'] }},
+  { id:'wolf', e:'🐺', w:4, snd:'У-у-у-у-у!', names:{
+    ru:['волк','волчонок','волчок'], en:['wolf'],
+    es:['lobo'], fr:['loup'], de:['Wolf'], it:['lupo'],
+    pt:['lobo'], uk:['вовк'], pl:['wilk'], tr:['kurt'],
+    zh:['狼'], ja:['おおかみ','オオカミ','狼'] }},
+  { id:'snowman', e:'⛄', w:4, snd:'Мне хорошо только в мороз!', names:{
+    ru:['снеговик','снежная баба','снеговичок'], en:['snowman'],
+    es:['muñeco de nieve'], fr:['bonhomme de neige'], de:['Schneemann'], it:['pupazzo di neve'],
+    pt:['boneco de neve'], uk:['сніговик'], pl:['bałwan','bałwanek'], tr:['kardan adam'],
+    zh:['雪人'], ja:['ゆきだるま','雪だるま','スノーマン'] }},
+
+  // ---- Транспорт (мир 5) ----
+  { id:'car', e:'🚗', w:5, snd:'Би-би!', names:{
+    ru:['машина','машинка','автомобиль','авто','легковушка'], en:['car','auto','automobile'],
+    es:['coche','carro','auto'], fr:['voiture','auto'], de:['Auto','Wagen'], it:['macchina','auto','automobile'],
+    pt:['carro','automóvel'], uk:['машина','автомобіль','авто'], pl:['samochód','auto'], tr:['araba','otomobil'],
+    zh:['汽车','车'], ja:['くるま','クルマ','車'] }},
+  { id:'bus', e:'🚌', w:5, snd:'Я вожу много-много людей!', names:{
+    ru:['автобус','автобусик'], en:['bus'],
+    es:['autobús','bus'], fr:['bus','autobus'], de:['Bus'], it:['autobus','bus','pullman'],
+    pt:['ônibus','onibus','autocarro'], uk:['автобус'], pl:['autobus'], tr:['otobüs'],
+    zh:['公共汽车','公交车','巴士'], ja:['バス','ばす'] }},
+  { id:'train', e:'🚂', w:5, snd:'Ту-ту! Чух-чух-чух!', names:{
+    ru:['поезд','паровоз','паровозик','электричка'], en:['train','locomotive'],
+    es:['tren'], fr:['train','locomotive'], de:['Zug','Eisenbahn','Lokomotive'], it:['treno'],
+    pt:['trem','comboio'], uk:['поїзд','потяг','паровоз'], pl:['pociąg','lokomotywa'], tr:['tren'],
+    zh:['火车'], ja:['きしゃ','汽車','でんしゃ','電車'] }},
+  { id:'plane', e:'✈️', w:5, snd:'В-ж-ж-ж! Я лечу в облаках!', names:{
+    ru:['самолёт','самолет','самолётик','самолетик'], en:['plane','airplane','aeroplane','jet'],
+    es:['avión'], fr:['avion'], de:['Flugzeug'], it:['aereo','aeroplano'],
+    pt:['avião'], uk:['літак'], pl:['samolot'], tr:['uçak'],
+    zh:['飞机'], ja:['ひこうき','飛行機'] }},
+  { id:'helicopter', e:'🚁', w:5, snd:'Тр-р-р-р! У меня винт на макушке!', names:{
+    ru:['вертолёт','вертолет','вертолётик','вертолетик'], en:['helicopter','chopper'],
+    es:['helicóptero'], fr:['hélicoptère'], de:['Hubschrauber','Helikopter'], it:['elicottero'],
+    pt:['helicóptero'], uk:['вертоліт','гелікоптер'], pl:['helikopter','śmigłowiec'], tr:['helikopter'],
+    zh:['直升机'], ja:['ヘリコプター','ヘリ'] }},
+  { id:'rocket', e:'🚀', w:5, snd:'Пять, четыре, три, два, один… Пуск!', names:{
+    ru:['ракета','ракеточка'], en:['rocket','spaceship'],
+    es:['cohete'], fr:['fusée'], de:['Rakete'], it:['razzo'],
+    pt:['foguete'], uk:['ракета'], pl:['rakieta'], tr:['roket'],
+    zh:['火箭'], ja:['ロケット','ろけっと'] }},
+  { id:'sailboat', e:'⛵', w:5, snd:'Меня везёт ветер!', names:{
+    ru:['парусник','лодка','кораблик','корабль','яхта'], en:['sailboat','boat','ship','yacht'],
+    es:['velero','barco'], fr:['voilier','bateau'], de:['Segelboot','Boot','Schiff'], it:['barca','barca a vela','nave'],
+    pt:['barco','veleiro','navio'], uk:['човен','вітрильник','корабель'], pl:['żaglówka','łódka','łódź','statek'], tr:['yelkenli','tekne','gemi'],
+    zh:['帆船','船'], ja:['ふね','フネ','船','ヨット'] }},
+  { id:'bicycle', e:'🚲', w:5, snd:'Дзынь-дзынь!', names:{
+    ru:['велосипед','велик','велосипедик'], en:['bicycle','bike'],
+    es:['bicicleta','bici'], fr:['vélo','bicyclette'], de:['Fahrrad','Rad'], it:['bicicletta','bici'],
+    pt:['bicicleta'], uk:['велосипед'], pl:['rower'], tr:['bisiklet'],
+    zh:['自行车','单车'], ja:['じてんしゃ','自転車'] }},
+
+  // ---- Сказка (мир 6) ----
+  { id:'unicorn', e:'🦄', w:6, snd:'И-го-го! У меня рог и радуга!', names:{
+    ru:['единорог','единорожка','единорожек'], en:['unicorn'],
+    es:['unicornio'], fr:['licorne'], de:['Einhorn'], it:['unicorno'],
+    pt:['unicórnio'], uk:['єдиноріг'], pl:['jednorożec'], tr:['tek boynuzlu at','unicorn'],
+    zh:['独角兽'], ja:['ユニコーン','ゆにこーん'] }},
+  { id:'dragon', e:'🐉', w:6, snd:'Р-Р-Р! Я дышу огнём!', names:{
+    ru:['дракон','дракончик','дракоша'], en:['dragon'],
+    es:['dragón'], fr:['dragon'], de:['Drache'], it:['drago'],
+    pt:['dragão'], uk:['дракон'], pl:['smok'], tr:['ejderha','ejder'],
+    zh:['龙'], ja:['りゅう','竜','龍','ドラゴン'] }},
+  { id:'ghost', e:'👻', w:6, snd:'Бу-у-у-у!', names:{
+    ru:['привидение','призрак','приведение'], en:['ghost'],
+    es:['fantasma'], fr:['fantôme'], de:['Gespenst','Geist'], it:['fantasma'],
+    pt:['fantasma'], uk:['привид','примара'], pl:['duch'], tr:['hayalet'],
+    zh:['鬼','幽灵'], ja:['おばけ','オバケ','ゆうれい','幽霊'] }},
+  { id:'robot', e:'🤖', w:6, snd:'Бип-буп! Я умею считать до миллиона!', names:{
+    ru:['робот','роботик'], en:['robot'],
+    es:['robot'], fr:['robot'], de:['Roboter'], it:['robot'],
+    pt:['robô','robo'], uk:['робот'], pl:['robot'], tr:['robot'],
+    zh:['机器人'], ja:['ロボット','ろぼっと'] }},
+  { id:'fairy', e:'🧚', w:6, snd:'Дзынь! Я машу волшебной палочкой!', names:{
+    ru:['фея','феечка','эльф'], en:['fairy'],
+    es:['hada'], fr:['fée'], de:['Fee'], it:['fata'],
+    pt:['fada'], uk:['фея'], pl:['wróżka'], tr:['peri'],
+    zh:['仙女'], ja:['ようせい','妖精','フェアリー'] }},
+  { id:'wizard', e:'🧙', w:6, snd:'Абра-кадабра!', names:{
+    ru:['волшебник','маг','колдун','чародей','волшебница'], en:['wizard','magician','mage'],
+    es:['mago'], fr:['magicien','sorcier'], de:['Zauberer','Magier'], it:['mago'],
+    pt:['mago','feiticeiro'], uk:['чарівник','маг'], pl:['czarodziej','mag'], tr:['büyücü','sihirbaz'],
+    zh:['魔法师','巫师'], ja:['まほうつかい','魔法使い'] }},
+  { id:'dino', e:'🦖', w:6, snd:'Р-А-Р-Р! Я жил давным-давно!', names:{
+    ru:['динозавр','дино','тираннозавр','рекс','тирекс'], en:['dinosaur','dino','t-rex','trex','tyrannosaurus'],
+    es:['dinosaurio','dino'], fr:['dinosaure','dino'], de:['Dinosaurier','Dino'], it:['dinosauro','dino'],
+    pt:['dinossauro','dino'], uk:['динозавр','діно'], pl:['dinozaur','dino'], tr:['dinozor','dino'],
+    zh:['恐龙'], ja:['きょうりゅう','恐竜','ティラノサウルス'] }}
+];
+
+const PRAISE = ['Молодец!','Супер!','Ты гений!','Вот это да!','Отлично!','Ура!','Здорово!'];
+const CHEER  = ['Почти!','Попробуй ещё!','Не сдавайся!','Чуть-чуть не хватило!','Ты сможешь!'];
+
+/* ================== ПОМОЩНИКИ ================== */
+const $ = id => document.getElementById(id);
+const rnd = arr => arr[Math.floor(Math.random() * arr.length)];
+
+const CHAR_MAP = { 'ß':'ss','ł':'l','ı':'i','œ':'oe','æ':'ae','ø':'o','đ':'d' };
+function norm(s) {
+  s = s.toLowerCase().trim()
+    .replace(/ё/g, 'е')
+    .replace(/[!?.,;:'"“”‘’«»]/g, '')
+    .replace(/[\s\-–—_]+/g, ' ');
+  s = s.replace(/[ßłıœæøđ]/g, ch => CHAR_MAP[ch]);
+  s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return s;
+}
+
+// заранее готовим набор всех правильных слов для каждого зверя
+for (const a of ANIMALS) {
+  a.set = new Set();
+  for (const lang in a.names) for (const w of a.names[lang]) a.set.add(norm(w));
+}
+
+/* ================== СОХРАНЕНИЕ ================== */
+const SAVE_KEY = 'shadow-zoo-v1';
+let state = {
+  coins: CONFIG.startCoins,
+  earned: 0,           // всего заработано (открывает миры)
+  world: 0,            // где играем сейчас
+  zoo: [],             // купленные звери
+  zooPlace: {},        // кто где живёт в зоопарке (id -> зона)
+  voiced: [],          // кому записали голосовушку
+  guessed: [],         // кого уже угадывал
+  lastGift: null,
+  voiceLang: 'ru-RU'   // на каком языке слушает микрофон
+};
+try {
+  const raw = localStorage.getItem(SAVE_KEY);
+  if (raw) state = Object.assign(state, JSON.parse(raw));
+} catch (e) { /* начнём с чистого листа */ }
+function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {} }
+
+/* ================== ЗВУКИ ================== */
+let audioCtx = null;
+function beep(notes, type, dur) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    notes.forEach((f, i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = type; o.frequency.value = f;
+      const t = audioCtx.currentTime + i * 0.09;
+      g.gain.setValueAtTime(0.18, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t); o.stop(t + dur);
+    });
+  } catch (e) {}
+}
+const sndWin   = () => beep([523, 659, 784, 1047], 'triangle', 0.35);
+const sndWrong = () => beep([233, 196], 'sine', 0.3);
+const sndCoin  = () => beep([988, 1319], 'square', 0.12);
+const sndFanf  = () => beep([392, 523, 659, 784, 1047], 'triangle', 0.5);
+
+function speak(text) {
+  try {
+    if (!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ru-RU'; u.rate = 0.95; u.pitch = 1.15;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ================== ЭФФЕКТЫ ================== */
+let toastTimer = null;
+function toast(text) {
+  const t = $('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  // длинные подсказки висят дольше, чтобы взрослый успел прочитать
+  toastTimer = setTimeout(() => t.classList.remove('show'), Math.min(9000, 2600 + text.length * 35));
+}
+
+function floatCoin(text, color, el) {
+  const r = (el || $('coinsPill')).getBoundingClientRect();
+  const f = document.createElement('div');
+  f.className = 'float-coin';
+  f.textContent = text;
+  f.style.color = color;
+  f.style.left = (r.left + r.width / 2 - 20) + 'px';
+  f.style.top = (r.top + r.height / 2) + 'px';
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 1100);
+}
+
+function confetti() {
+  const box = $('confetti');
+  const items = ['🎉','✨','⭐','🪙','🎊','💛'];
+  for (let i = 0; i < 26; i++) {
+    const c = document.createElement('span');
+    c.className = 'conf';
+    c.textContent = rnd(items);
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.fontSize = (20 + Math.random() * 16) + 'px';
+    c.style.animationDuration = (1.1 + Math.random() * 1.1) + 's';
+    c.style.animationDelay = (Math.random() * 0.25) + 's';
+    box.appendChild(c);
+    setTimeout(() => c.remove(), 2600);
+  }
+}
+
+/* ================== ИГРА ================== */
+let round = null;   // { animal, gold, won, patches, tried }
+let lastId = null;
+
+function coinsUI() {
+  $('coins').textContent = state.coins;
+  $('hintLight').disabled = round && round.won || state.coins < CONFIG.hintLight;
+  $('hintSound').disabled = round && round.won || state.coins < CONFIG.hintSound;
+}
+
+function unlockedWorlds() {
+  return WORLDS.map((w, i) => state.earned >= CONFIG.worldNeeds[i]);
+}
+
+function newRound(forceId, forceGold) {
+  const pool = ANIMALS.filter(a => a.w === state.world && a.id !== lastId);
+  const animal = forceId ? ANIMALS.find(a => a.id === forceId) : rnd(pool);
+  round = {
+    animal,
+    gold: forceGold !== undefined ? forceGold : Math.random() < CONFIG.goldChance,
+    won: false, patches: 0, tried: new Set()
+  };
+  lastId = animal.id;
+
+  const w = WORLDS[animal.w];
+  $('worldBanner').textContent = w.e + ' ' + w.name;
+  $('goldBanner').hidden = !round.gold;
+  const stage = $('stage');
+  stage.className = 'stage ' + w.cls + (round.gold ? ' gold' : '');
+  $('shadowEmoji').textContent = animal.e;
+  $('patches').innerHTML = '';
+  $('bubble').hidden = true;
+  $('message').innerHTML = '';
+  $('translations').innerHTML = '';
+  $('nextBtn').hidden = true;
+  $('answer').value = '';
+  $('answer').disabled = false;
+  progressUI();
+  coinsUI();
+  // не дёргаем страницу вниз при открытии — пусть видно заголовок и наклейки
+  $('answer').focus({ preventScroll: true });
+}
+
+function progressUI() {
+  const un = unlockedWorlds();
+  let note = 'Угадано зверей: ' + state.guessed.length + ' из ' + ANIMALS.length;
+  const nextIdx = un.indexOf(false);
+  if (nextIdx !== -1) {
+    note += ' · До мира «' + WORLDS[nextIdx].name + '» ещё ' + (CONFIG.worldNeeds[nextIdx] - state.earned) + '🪙';
+  }
+  $('progressNote').textContent = note;
+}
+
+function wrong(word) {
+  if (round.tried.has(word)) {
+    toast('Это слово ты уже пробовал 😉 Попробуй другое!');
+    return;
+  }
+  round.tried.add(word);
+  const pen = CONFIG.penaltyMin + Math.floor(Math.random() * (CONFIG.penaltyMax - CONFIG.penaltyMin + 1));
+  const taken = Math.min(pen, state.coins);
+  state.coins -= taken;
+  save();
+  coinsUI();
+  if (taken > 0) floatCoin('-' + taken + '🪙', '#e2574c');
+  $('message').innerHTML = '<span class="bad">' + rnd(CHEER) + (taken > 0 ? ' (−' + taken + '🪙)' : '') + ' 💪</span>';
+  const stage = $('stage');
+  stage.classList.add('shake');
+  setTimeout(() => stage.classList.remove('shake'), 500);
+  sndWrong();
+  $('answer').select();
+}
+
+function win() {
+  round.won = true;
+  const reward = round.gold ? CONFIG.goldReward : CONFIG.reward;
+  state.coins += reward;
+  state.earned += reward;
+  if (!state.guessed.includes(round.animal.id)) state.guessed.push(round.animal.id);
+
+  const name = round.animal.names.ru[0];
+  $('stage').classList.add('won');
+  $('message').innerHTML = '<span class="good">' + rnd(PRAISE) + ' Это ' + name + '! +' + reward + '🪙</span>';
+
+  // покажем, как зверя зовут в других странах
+  const langs = Object.keys(LANG_FLAGS).sort(() => Math.random() - 0.5).slice(0, 3);
+  $('translations').innerHTML = langs.map(l => LANG_FLAGS[l] + ' ' + round.animal.names[l][0]).join(' · ');
+
+  $('answer').disabled = true;
+  $('nextBtn').hidden = false;
+  floatCoin('+' + reward + '🪙', '#2e9e44');
+  confetti();
+  sndWin();
+  speak(rnd(PRAISE) + ' Это ' + name + '!');
+
+  // не открылся ли новый мир?
+  const before = save._prevUnlocked || [];
+  const now = unlockedWorlds();
+  now.forEach((u, i) => {
+    if (u && before[i] === false) {
+      setTimeout(() => { toast(WORLDS[i].e + ' Открылся новый мир: ' + WORLDS[i].name + '! Смотри во вкладке «Миры»!'); sndFanf(); }, 900);
+    }
+  });
+  save._prevUnlocked = now;
+
+  save();
+  coinsUI();
+  progressUI();
+  $('nextBtn').focus();
+}
+
+function submitGuess() {
+  if (!round || round.won) return;
+  const word = norm($('answer').value);
+  if (!word) return;
+  if (round.animal.set.has(word)) win(); else wrong(word);
+}
+$('guessForm').addEventListener('submit', e => { e.preventDefault(); submitGuess(); });
+
+/* ================== ГОЛОСОВОЙ ВВОД ================== */
+const VOICE_LANGS = [
+  ['ru-RU', '🇷🇺 Русский'],   ['en-US', '🇬🇧 English'],  ['es-ES', '🇪🇸 Español'],
+  ['fr-FR', '🇫🇷 Français'],  ['de-DE', '🇩🇪 Deutsch'],  ['it-IT', '🇮🇹 Italiano'],
+  ['pt-BR', '🇵🇹 Português'], ['uk-UA', '🇺🇦 Українська'], ['pl-PL', '🇵🇱 Polski'],
+  ['tr-TR', '🇹🇷 Türkçe'],    ['zh-CN', '🇨🇳 中文'],      ['ja-JP', '🇯🇵 日本語']
+];
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null, listening = false;
+
+const micBtn = $('micBtn'), voiceSel = $('voiceLang');
+VOICE_LANGS.forEach(([code, label]) => {
+  const o = document.createElement('option');
+  o.value = code; o.textContent = label;
+  voiceSel.appendChild(o);
+});
+if (VOICE_LANGS.some(([c]) => c === state.voiceLang)) voiceSel.value = state.voiceLang;
+voiceSel.addEventListener('change', () => { state.voiceLang = voiceSel.value; save(); });
+
+function micUI() {
+  micBtn.classList.toggle('listening', listening);
+  micBtn.textContent = listening ? '🔴' : '🎤';
+  $('answer').placeholder = listening ? 'Слушаю… говори!' : 'Кто это? Напиши здесь!';
+}
+
+function handleVoiceResult(alts, isFinal) {
+  if (!round || round.won) return;
+  const inp = $('answer');
+  if (!isFinal) { inp.value = alts[0] || ''; return; }
+  // микрофон даёт несколько догадок: если среди них есть правильная — берём её
+  let best = alts[0] || '';
+  for (const t of alts) {
+    if (round.animal.set.has(norm(t))) { best = t; break; }
+  }
+  inp.value = best;
+  submitGuess();
+}
+
+const IS_SAFARI = /safari/i.test(navigator.userAgent) && !/chrome|crios|android|edg|fxios|opr/i.test(navigator.userAgent);
+let micJustAsked = false; // разрешение только что получили через диалог
+
+function voiceErrorMessage(code) {
+  if (code === 'no-speech') return 'Я ничего не услышал 🙉 Нажми 🎤 и скажи погромче!';
+  if (code === 'audio-capture') return 'Не нашёл микрофон 🎤 Проверь, что он подключён';
+  if (code === 'network') return 'Чтобы говорить голосом, нужен интернет 🌐';
+  if (code === 'not-allowed' || code === 'service-not-allowed') {
+    if (micJustAsked) return 'Разрешение получено! Теперь нажми 🎤 ещё разок 😊';
+    return IS_SAFARI
+      ? 'Safari не даёт слушать 🙈 Папа: включи Диктовку (Системные настройки → Клавиатура) и проверь Safari → Настройки → Веб-сайты → Микрофон. Или открой игру в Chrome 😊'
+      : 'Микрофон не разрешён 🙈 Попроси взрослого нажать «Разрешить»';
+  }
+  return 'Микрофон не сработал, нажми 🎤 ещё разок!';
+}
+
+// Safari сам не показывает вопрос про микрофон — вызываем его настоящим запросом доступа
+async function micPermission() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return location.protocol === 'file:' ? 'file' : 'skip';
+  }
+  try {
+    if (navigator.permissions && navigator.permissions.query) {
+      const st = await navigator.permissions.query({ name: 'microphone' });
+      if (st.state === 'granted') return 'granted';
+      if (st.state === 'denied') return 'denied';
+    }
+  } catch (e) { /* не все браузеры умеют так спрашивать — идём дальше */ }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(t => t.stop());
+    micJustAsked = true;
+    setTimeout(() => { micJustAsked = false; }, 15000);
+    return 'granted';
+  } catch (e) {
+    return (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) ? 'denied' : 'skip';
+  }
+}
+
+async function startListening() {
+  if (!SR) {
+    toast('В этом браузере микрофон не умеет слушать 🙈 Попробуй в Chrome или Safari!');
+    return;
+  }
+  if (listening) { try { recog.stop(); } catch (e) {} return; }
+
+  micBtn.textContent = '⏳';
+  const perm = await micPermission();
+  micBtn.textContent = '🎤';
+  if (perm === 'file') {
+    toast('Микрофон не работает, если игру открыть двойным кликом 🙈 Папа: запусти её как сайт — в README написано как');
+    return;
+  }
+  if (perm === 'denied') { toast(voiceErrorMessage('not-allowed')); return; }
+
+  try { speechSynthesis.cancel(); } catch (e) {}
+  recog = new SR();
+  recog.lang = voiceSel.value;
+  recog.interimResults = true;
+  recog.maxAlternatives = 5;
+  recog.onstart = () => { listening = true; micUI(); $('answer').value = ''; };
+  recog.onresult = ev => {
+    const res = ev.results[ev.results.length - 1];
+    handleVoiceResult(Array.from(res).map(a => a.transcript), res.isFinal);
+  };
+  recog.onerror = ev => {
+    listening = false; micUI();
+    toast(voiceErrorMessage(ev.error));
+  };
+  recog.onend = () => { listening = false; micUI(); };
+  try { recog.start(); } catch (e) { listening = false; micUI(); }
+}
+micBtn.addEventListener('click', startListening);
+
+$('nextBtn').addEventListener('click', () => newRound());
+
+/* ---- подсказки ---- */
+$('hintLight').addEventListener('click', () => {
+  if (round.won) return;
+  if (round.patches >= 3) { toast('Уже почти всё видно! 😄'); return; }
+  if (state.coins < CONFIG.hintLight) { toast('Не хватает монеток 🙈'); return; }
+  state.coins -= CONFIG.hintLight;
+  round.patches++;
+  save(); coinsUI();
+  floatCoin('-' + CONFIG.hintLight + '🪙', '#e2574c', $('hintLight'));
+  const p = document.createElement('span');
+  p.className = 'layer patch';
+  p.textContent = round.animal.e;
+  const x = 25 + Math.random() * 50, y = 25 + Math.random() * 50, r = 15 + Math.random() * 7;
+  p.style.clipPath = 'circle(' + r + '% at ' + x + '% ' + y + '%)';
+  $('patches').appendChild(p);
+  sndCoin();
+});
+
+$('hintSound').addEventListener('click', () => {
+  if (round.won) return;
+  if (state.coins < CONFIG.hintSound) { toast('Не хватает монеток 🙈'); return; }
+  state.coins -= CONFIG.hintSound;
+  save(); coinsUI();
+  floatCoin('-' + CONFIG.hintSound + '🪙', '#e2574c', $('hintSound'));
+  const b = $('bubble');
+  b.textContent = '🔊 ' + round.animal.snd;
+  b.hidden = false;
+  setTimeout(() => { b.hidden = true; }, 3500);
+  speak(round.animal.snd);
+});
+
+/* ================== ЗООПАРК ================== */
+const ZONES = [
+  { id:'north',  name:'Север',   e:'❄️', props:['⛄','🧊'], cls:'zn-north' },
+  { id:'forest', name:'Лес',     e:'🌲', props:['🌲','🌳'], cls:'zn-forest' },
+  { id:'meadow', name:'Полянка', e:'🌾', props:['🌻','🏡'], cls:'zn-meadow' },
+  { id:'sea',    name:'Море',    e:'🌊', props:['🌊','🐚'], cls:'zn-sea' },
+  { id:'road',   name:'Дорога',  e:'🛣️', props:['🚦','🏁'], cls:'zn-road' }
+];
+// куда селится новичок: по родному миру
+const HOME_ZONE = ['meadow', 'forest', 'sea', 'forest', 'north', 'road', 'meadow'];
+const zoneOf = a => state.zooPlace[a.id] || HOME_ZONE[a.w] || 'meadow';
+
+function renderZoo() {
+  const map = $('zooScene');
+  $('zooTitle').textContent = '🏞️ Твой зоопарк (' + state.zoo.length + ' из ' + ANIMALS.length + ')';
+  $('zooHint').textContent = state.zoo.length === 0
+    ? 'Пока пусто… Угадывай в игре, покупай в магазине — и посели зверей сюда! 🐾'
+    : 'Нажми на жителя: он заговорит, а ещё его можно переселить!';
+  map.innerHTML = '';
+  ZONES.forEach(z => {
+    const strip = document.createElement('div');
+    strip.className = 'zone ' + z.cls;
+    strip.innerHTML = '<span class="zone-label">' + z.e + ' ' + z.name + '</span>'
+      + '<span class="zone-prop">' + z.props[0] + '</span>';
+    state.zoo.filter(id => { const a = ANIMALS.find(x => x.id === id); return a && zoneOf(a) === z.id; })
+      .forEach((id, i) => {
+        const a = ANIMALS.find(x => x.id === id);
+        const sp = document.createElement('span');
+        sp.className = 'zoo-animal';
+        sp.textContent = a.e;
+        sp.title = a.names.ru[0];
+        sp.style.animationDelay = (i * 0.25) + 's';
+        sp.addEventListener('click', () => openPanel(a));
+        strip.appendChild(sp);
+      });
+    strip.insertAdjacentHTML('beforeend', '<span class="zone-prop">' + z.props[1] + '</span>');
+    map.appendChild(strip);
+  });
+
+  const grid = $('shopGrid');
+  grid.innerHTML = '';
+  for (const a of ANIMALS) {
+    const price = CONFIG.zooPrice[a.w];
+    const card = document.createElement('div');
+    const owned = state.zoo.includes(a.id);
+    const guessed = state.guessed.includes(a.id);
+    card.className = 'shop-card' + (owned ? ' owned' : '') + (!guessed && !owned ? ' locked' : '');
+    if (owned) {
+      card.innerHTML = '<div class="big">' + a.e + '</div><div class="nm">' + a.names.ru[0] + '</div><div style="color:#2e9e44;font-weight:bold">Живёт у тебя! ✅</div>';
+    } else if (guessed) {
+      card.innerHTML = '<div class="big">' + a.e + '</div><div class="nm">' + a.names.ru[0] + '</div>';
+      const btn = document.createElement('button');
+      btn.textContent = 'Купить · ' + price + '🪙';
+      btn.disabled = state.coins < price;
+      btn.addEventListener('click', () => {
+        if (state.coins < price) return;
+        state.coins -= price;
+        state.zoo.push(a.id);
+        state.zooPlace[a.id] = HOME_ZONE[a.w] || 'meadow';
+        save();
+        coinsUI();
+        sndCoin();
+        confetti();
+        const z = ZONES.find(x => x.id === state.zooPlace[a.id]);
+        toast(a.e + ' ' + a.names.ru[0] + ' поселился: ' + z.name + ' ' + z.e + '! Нажми на него — он заговорит!');
+        renderZoo();
+      });
+      card.appendChild(btn);
+    } else {
+      card.innerHTML = '<div class="big">❓</div><div class="nm">???</div><div class="hint-lock">Сначала угадай в игре!</div>';
+    }
+    grid.appendChild(card);
+  }
+}
+
+/* ================== ОКОШКО ЖИТЕЛЯ: голосовушка и переселение ================== */
+let panelAnimal = null, mouthTimer = null, mouthAlive = false;
+let mediaRec = null, recChunks = [], recTimeout = null;
+
+// сундучок для голосовушек (IndexedDB — туда влезают настоящие записи)
+function idb() {
+  return new Promise((res, rej) => {
+    const q = indexedDB.open('shadow-zoo-db', 1);
+    q.onupgradeneeded = () => q.result.createObjectStore('voices');
+    q.onsuccess = () => res(q.result);
+    q.onerror = () => rej(q.error);
+  });
+}
+async function saveVoice(id, blob) {
+  const d = await idb();
+  return new Promise((res, rej) => {
+    const tx = d.transaction('voices', 'readwrite');
+    tx.objectStore('voices').put(blob, id);
+    tx.oncomplete = res;
+    tx.onerror = () => rej(tx.error);
+  });
+}
+async function loadVoice(id) {
+  const d = await idb();
+  return new Promise((res, rej) => {
+    const rq = d.transaction('voices').objectStore('voices').get(id);
+    rq.onsuccess = () => res(rq.result || null);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+
+function setMouth(v) {
+  const m = $('mouth');
+  m.style.opacity = v === 0 ? 0 : 1; // ротик виден, только когда зверь говорит
+  m.style.transform = 'translateX(-50%) scaleY(' + (0.15 + v * 1.5).toFixed(2) + ')';
+  $('panelEmoji').style.transform = 'scale(' + (1 + v * 0.05).toFixed(3) + ')';
+}
+function fakeMouthStart() {
+  mouthAlive = true;
+  clearInterval(mouthTimer);
+  mouthTimer = setInterval(() => setMouth(0.15 + Math.random() * 0.75), 90);
+}
+function stopMouth() {
+  mouthAlive = false;
+  clearInterval(mouthTimer);
+  mouthTimer = null;
+  setMouth(0);
+}
+
+function updatePanelButtons() {
+  $('playBtn').textContent = state.voiced.includes(panelAnimal.id) ? '▶️ Твой голосок' : '▶️ Говори!';
+  const row = $('moveRow');
+  row.innerHTML = '';
+  ZONES.forEach(z => {
+    const b = document.createElement('button');
+    b.className = 'zone-btn' + (zoneOf(panelAnimal) === z.id ? ' cur' : '');
+    b.textContent = z.e + ' ' + z.name;
+    b.addEventListener('click', () => {
+      state.zooPlace[panelAnimal.id] = z.id;
+      save();
+      renderZoo();
+      updatePanelButtons();
+      sndCoin();
+      toast(panelAnimal.e + ' ' + panelAnimal.names.ru[0] + ' переехал: ' + z.name + ' ' + z.e);
+    });
+    row.appendChild(b);
+  });
+}
+
+function openPanel(a) {
+  panelAnimal = a;
+  $('panelEmoji').textContent = a.e;
+  $('panelName').textContent = a.names.ru[0];
+  stopMouth();
+  updatePanelButtons();
+  $('panelWrap').hidden = false;
+}
+function closePanel() {
+  if (mediaRec && mediaRec.state === 'recording') { try { mediaRec.stop(); } catch (e) {} }
+  try { speechSynthesis.cancel(); } catch (e) {}
+  stopMouth();
+  $('panelWrap').hidden = true;
+}
+$('panelClose').addEventListener('click', closePanel);
+$('panelWrap').addEventListener('click', ev => { if (ev.target === $('panelWrap')) closePanel(); });
+
+// 🎙️ запись голосовушки (до 10 секунд)
+$('recBtn').addEventListener('click', async () => {
+  if (mediaRec && mediaRec.state === 'recording') { mediaRec.stop(); return; }
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    toast('В этом браузере записывать голос нельзя 🙈 Попробуй в Chrome или Safari!');
+    return;
+  }
+  const perm = await micPermission();
+  if (perm === 'file') { toast('Запись не работает, если игру открыть двойным кликом 🙈 Нужно открыть как сайт'); return; }
+  if (perm === 'denied') { toast(voiceErrorMessage('not-allowed')); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm']
+      .find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
+    mediaRec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    recChunks = [];
+    const forId = panelAnimal.id;
+    mediaRec.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+    mediaRec.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      clearTimeout(recTimeout);
+      $('recBtn').textContent = '🎙️ Записать голос';
+      $('panelEmoji').classList.remove('recording');
+      const blob = new Blob(recChunks, { type: mediaRec.mimeType || 'audio/webm' });
+      if (blob.size < 300) { toast('Ничего не записалось 🙉 Нажми 🎙️ и говори!'); return; }
+      try {
+        await saveVoice(forId, blob);
+        if (!state.voiced.includes(forId)) state.voiced.push(forId);
+        save();
+        if (panelAnimal && panelAnimal.id === forId) updatePanelButtons();
+        toast('Голосок записан! Нажми ▶️ — послушаем! 🎉');
+        sndWin();
+      } catch (e) { toast('Ой, не получилось сохранить голосок 😢 Попробуй ещё раз!'); }
+    };
+    mediaRec.start();
+    $('recBtn').textContent = '🔴 Стоп';
+    $('panelEmoji').classList.add('recording');
+    toast('Говори за ' + panelAnimal.names.ru[0] + '! Нажми «Стоп», когда закончишь 🎙️');
+    recTimeout = setTimeout(() => { if (mediaRec.state === 'recording') mediaRec.stop(); }, 10000);
+  } catch (e) {
+    toast('Микрофон не дал записать 🙈 Попробуй ещё раз!');
+  }
+});
+
+// ▶️ зверь говорит: твоим голосом (если записала) или своей фразой
+$('playBtn').addEventListener('click', async () => {
+  const a = panelAnimal;
+  try { speechSynthesis.cancel(); } catch (e) {}
+  stopMouth();
+  if (state.voiced.includes(a.id)) {
+    try {
+      const blob = await loadVoice(a.id);
+      if (blob) {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        const buf = await audioCtx.decodeAudioData(await blob.arrayBuffer());
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const an = audioCtx.createAnalyser();
+        an.fftSize = 512;
+        src.connect(an);
+        an.connect(audioCtx.destination);
+        const data = new Uint8Array(an.fftSize);
+        mouthAlive = true;
+        src.onended = stopMouth;
+        (function loop() {
+          if (!mouthAlive) return;
+          an.getByteTimeDomainData(data);
+          let s = 0;
+          for (let i = 0; i < data.length; i++) { const d = (data[i] - 128) / 128; s += d * d; }
+          setMouth(Math.min(1, Math.sqrt(s / data.length) * 6)); // рот открывается от громкости голоса
+          requestAnimationFrame(loop);
+        })();
+        src.start();
+        return;
+      }
+    } catch (e) { /* не смогли включить запись — пусть скажет сам */ }
+  }
+  fakeMouthStart();
+  try {
+    const u = new SpeechSynthesisUtterance(a.snd);
+    u.lang = 'ru-RU'; u.rate = 0.95; u.pitch = 1.2;
+    u.onend = stopMouth;
+    u.onerror = stopMouth;
+    speechSynthesis.speak(u);
+    setTimeout(() => { if (mouthTimer && !speechSynthesis.speaking) stopMouth(); }, 4000);
+  } catch (e) { stopMouth(); }
+});
+
+/* ================== МИРЫ ================== */
+function renderWorlds() {
+  $('earnedTotal').textContent = state.earned;
+  const un = unlockedWorlds();
+  const list = $('worldList');
+  list.innerHTML = '';
+  WORLDS.forEach((w, i) => {
+    const card = document.createElement('div');
+    card.className = 'world-card';
+    const need = CONFIG.worldNeeds[i];
+    let sub, btnHtml;
+    if (un[i]) {
+      sub = 'Открыт! Зверей: ' + ANIMALS.filter(a => a.w === i).length;
+    } else {
+      const left = need - state.earned;
+      const pct = Math.min(100, Math.round(state.earned / need * 100));
+      sub = 'Заработай ещё ' + left + '🪙 <div class="bar"><i style="width:' + pct + '%"></i></div>';
+    }
+    card.innerHTML = '<div class="we">' + w.e + '</div><div class="wt"><b>' + w.name + '</b><div class="sub">' + sub + '</div></div>';
+    const btn = document.createElement('button');
+    if (!un[i]) {
+      btn.textContent = '🔒';
+      btn.disabled = true;
+    } else if (state.world === i) {
+      btn.textContent = 'Играем тут!';
+      btn.className = 'current';
+    } else {
+      btn.textContent = 'Играть тут';
+      btn.addEventListener('click', () => {
+        state.world = i;
+        save();
+        renderWorlds();
+        newRound();
+        switchTab('play');
+      });
+    }
+    card.appendChild(btn);
+    list.appendChild(card);
+  });
+}
+
+$('resetBtn').addEventListener('click', () => {
+  if (confirm('Точно начать заново? Все монетки и звери сотрутся!')) {
+    localStorage.removeItem(SAVE_KEY);
+    location.reload();
+  }
+});
+
+/* ================== ВКЛАДКИ ================== */
+function switchTab(name) {
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  ['play', 'zoo', 'worlds'].forEach(t => { $('tab-' + t).hidden = t !== name; });
+  if (name === 'zoo') renderZoo();
+  if (name === 'worlds') renderWorlds();
+  if (name === 'play') $('answer').focus({ preventScroll: true });
+}
+document.querySelectorAll('.tabs button').forEach(b =>
+  b.addEventListener('click', () => switchTab(b.dataset.tab)));
+
+/* ================== НАКЛЕЙКИ НА ФОНЕ ================== */
+const STICKERS = ['🦁','🐯','🐨','🐼','🦊','🐸','🐵','🐰','🦒','🐘','🦩','🦜','🐢','🐙','🦀','🐬','🐳','🦈','🐧','🦆','🦉','🐝','🦋','🐞','🐌','🦄','🐴','🐮','🐷','🐔','🐑','🐟','🐾','⭐'];
+
+function buildStickers() {
+  const box = $('stickers');
+  box.innerHTML = '';
+  const w = window.innerWidth, h = window.innerHeight;
+  const small = w < 600;
+  const cell = small ? 96 : 112;
+  for (let y = 0; y < h; y += cell) {
+    for (let x = 0; x < w; x += cell) {
+      if (Math.random() > 0.7) continue; // не в каждую клеточку — так живее
+      const s = document.createElement('span');
+      s.className = 'stk';
+      s.textContent = rnd(STICKERS);
+      const size = small ? 20 + Math.random() * 20 : 26 + Math.random() * 34;
+      s.style.fontSize = size + 'px';
+      s.style.left = Math.min(w - size - 4, x + Math.random() * cell * 0.6) + 'px';
+      s.style.top = Math.min(h - size - 4, y + Math.random() * cell * 0.6) + 'px';
+      s.style.setProperty('--rot', (Math.random() * 56 - 28).toFixed(0) + 'deg');
+      box.appendChild(s);
+    }
+  }
+}
+
+// секрет: наклейку можно потыкать — она подпрыгнет и пикнет
+// (каждый раз чуть по-разному, будто у каждого зверька свой голосок)
+function popSticker(s) {
+  s.classList.remove('pop');
+  void s.offsetWidth;
+  s.classList.add('pop');
+  const base = 450 + Math.random() * 500;
+  beep([base, base * 1.4], 'triangle', 0.13);
+}
+
+$('stickers').addEventListener('click', ev => {
+  if (ev.target.classList && ev.target.classList.contains('stk')) popSticker(ev.target);
+});
+
+// наклейки часто лежат ПОД прозрачными краями страницы — палец попадает в «стекло».
+// Ловим такие клики и ищем, какой зверёк прячется под этой точкой.
+document.addEventListener('click', ev => {
+  const t = ev.target;
+  if (!(t instanceof Element)) return;
+  if (t.classList.contains('stk')) return;                      // уже попали прямо в наклейку
+  if (t.closest('button, input, select, a, form, .card')) return; // игру не трогаем
+  const s = document.elementsFromPoint(ev.clientX, ev.clientY)
+    .find(el => el.classList && el.classList.contains('stk'));
+  if (s) popSticker(s);
+});
+
+let stickerTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(stickerTimer);
+  stickerTimer = setTimeout(buildStickers, 250);
+});
+buildStickers();
+
+/* ================== СТАРТ ================== */
+// ежедневный подарок
+const today = new Date().toISOString().slice(0, 10);
+if (state.lastGift !== today) {
+  state.lastGift = today;
+  state.coins += CONFIG.dailyGift;
+  save();
+  setTimeout(() => { toast('🎁 Ежедневный подарок: +' + CONFIG.dailyGift + ' монеток!'); sndCoin(); }, 800);
+}
+
+// вдруг сохранённый мир ещё закрыт (после сброса настроек)
+if (!unlockedWorlds()[state.world]) state.world = 0;
+save._prevUnlocked = unlockedWorlds();
+
+newRound();
+coinsUI();
+
+// для проверки игры (папа может открыть консоль и посмотреть)
+window.game = { state, newRound, norm, ANIMALS, CONFIG, WORLDS, ZONES, handleVoiceResult, voiceSupported: !!SR, voiceErrorMessage, micPermission, IS_SAFARI, openPanel, closePanel, zoneOf, renderZoo, setMouth };
+</script>
+</body>
+</html>
